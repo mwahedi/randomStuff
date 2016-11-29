@@ -84,21 +84,38 @@ var cohortsCalc = {
         for(var dt in cohorts) {
             for(var user in cohorts[dt]) {
                 for(var wk in cohorts[dt][user]){
-                    if(typeof finCohort[dt]!="object"){
+                    dt = parseInt(dt)
+                    wk = parseInt(wk)
+                    if(typeof finCohort[dt]!="object") {
                         finCohort[dt] = {};
                         finCohort[dt][wk] = {delivered: 0,
-                                         skipped: 0,
-                                         cancelled: 0}
+                                             skipped: 0,
+                                             cancelled: 0}
                     }
-                    if(typeof finCohort[dt][wk]!="object"){
+                    if(typeof finCohort[dt][wk]!="object") {
                         finCohort[dt][wk] = {delivered: 0,
-                                         skipped: 0,
-                                         cancelled: 0}
+                                             skipped: 0,
+                                             cancelled: 0}
                     }
-
-                    finCohort[dt][wk].delivered += parseInt(cohorts[dt][user][wk].delivered)
-                    finCohort[dt][wk].cancelled += parseInt(cohorts[dt][user][wk].cancelled)
-                    finCohort[dt][wk].skipped += parseInt(cohorts[dt][user][wk].skipped)
+                    //we have to make sure, that one user can have only one action each week.
+                    //that means if they cancelled in the same week they got an order delivered
+                    //the cancellation is then added to the following week
+                    if((parseInt(cohorts[dt][user][wk].cancelled)>0)&&(
+                       (parseInt(cohorts[dt][user][wk].delivered)>0)||(
+                       (parseInt(cohorts[dt][user][wk].skipped)>0)))) {
+                        finCohort[dt][wk].delivered += parseInt(cohorts[dt][user][wk].delivered);
+                        finCohort[dt][wk].skipped += parseInt(cohorts[dt][user][wk].skipped);
+                        if(typeof finCohort[dt][wk+1]!="object") {
+                            finCohort[dt][wk+1] = {delivered: 0,
+                                                   skipped: 0,
+                                                   cancelled: 0}
+                        }
+                        finCohort[dt][wk+1].cancelled += parseInt(cohorts[dt][user][wk].cancelled)
+                    } else {
+                        finCohort[dt][wk].delivered += parseInt(cohorts[dt][user][wk].delivered)
+                        finCohort[dt][wk].cancelled += parseInt(cohorts[dt][user][wk].cancelled)
+                        finCohort[dt][wk].skipped += parseInt(cohorts[dt][user][wk].skipped)
+                    }
                 }
             }
         }
